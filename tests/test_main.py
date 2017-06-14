@@ -1,5 +1,6 @@
 import geopandas as gpd
 import responses
+import googlemaps
 
 from .context import googlemaps_helpers, DATA_DIR
 from googlemaps_helpers import *
