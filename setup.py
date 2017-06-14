@@ -8,15 +8,15 @@ with open('LICENSE.txt') as f:
     license = f.read()
 
 setuptools.setup(
-    name="googlemaps_extras",
+    name="googlemaps_helpers",
     version="0.0.0",
-    url="https://github.com/araichev/xxx",
+    url="https://github.com/araichev/googlemaps_helpers",
     author="Alex Raichev",
     author_email="araichev@users.noreply.github.com",
-    description="Some tools built on top of Google's Python API client",
+    description="Some helpers for the Google Maps API Python client",
     long_description=readme,
     license=license,
-    packages=find_packages(exclude=('tests', 'docs')),   
+    packages=find_packages(exclude=('tests', 'docs')),
     install_requires=[
         'googlemaps>=2.5.0',
         'geopandas>=0.2.1',
