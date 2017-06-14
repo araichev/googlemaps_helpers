@@ -1,12 +1,15 @@
 Google Maps Helpers
 ********************
+.. image:: https://travis-ci.org/araichev/googlemaps_helpers.svg?branch=master
+    :target: https://travis-ci.org/araichev/googlemaps_helpers
+
 Some Python 3.4+ helpers for the `Google Maps API Python client <https://github.com/googlemaps/google-maps-services-python>`_.
 Currently a tiny a hodgepodge incorporating GeoPandas.
 
 
 Installation
 =============
-``pip install git+git@github.com:araichev/googlemaps_extras``
+``pip install --upgrade git+https://github.com/araichev/googlemaps_helpers``
 
 
 Usage
@@ -30,4 +33,4 @@ History
 
 0.0.0, 2017-06-14
 ------------------------------
-- Initial release
+- First release
