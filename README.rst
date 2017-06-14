@@ -1,7 +1,7 @@
 Google Maps Helpers
 ********************
-Some helpers for the `Google Maps API Python client <https://github.com/googlemaps/google-maps-services-python>`_.
-So far a tiny a hodgepodge incorporating GeoPandas.
+Some Python 3.4+ helpers for the `Google Maps API Python client <https://github.com/googlemaps/google-maps-services-python>`_.
+Currently a tiny a hodgepodge incorporating GeoPandas.
 
 
 Installation
