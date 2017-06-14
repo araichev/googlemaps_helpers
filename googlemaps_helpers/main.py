@@ -8,7 +8,6 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 import shapely.geometry as sg
-import googlemaps
 
 
 CRS_WGS84 = {'init' :'epsg:4326'}
@@ -17,6 +16,7 @@ def get_secret(key, secrets_path):
     """
     Open the JSON file at ``secrets_path``,
     and return the value corresponding to the given key.
+    Good for retrieving your API key.
     """
     secrets_path = Path(secrets_path)
     with secrets_path.open() as src:
