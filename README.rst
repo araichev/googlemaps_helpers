@@ -9,7 +9,7 @@ Currently a tiny a hodgepodge incorporating GeoPandas.
 
 Installation
 =============
-``pip install git+git@github.com:araichev/googlemaps_extras``
+``pip install git+git@github.com:araichev/googlemaps_helpers``
 
 
 Usage
