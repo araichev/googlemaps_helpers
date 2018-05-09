@@ -9,12 +9,12 @@ Currently a tiny a hodgepodge incorporating GeoPandas.
 
 Installation
 =============
-``pip install --upgrade git+https://github.com/araichev/googlemaps_helpers``
+``pipenv install git+https://github.com/araichev/googlemaps_helpers#egg=googlemaps_helpers``
 
 
 Usage
 ======
-See the Jupyter notebook at ``ipynd/examples.ipynb``.
+See the Jupyter notebook at ``ipynb/examples.ipynb``.
 
 
 Authors
@@ -31,6 +31,11 @@ Notes
 History
 ========
 
+0.1.0, 2018-05-09
+------------------
+- Switched to Pipenv
+
+
 0.0.0, 2017-06-14
-------------------------------
+-------------------
 - First release
