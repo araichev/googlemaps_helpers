@@ -1,7 +1,5 @@
 from itertools import product
 import math
-import json
-from pathlib import Path
 from collections import OrderedDict
 
 import numpy as np
@@ -11,17 +9,6 @@ import shapely.geometry as sg
 
 
 CRS_WGS84 = {'init' :'epsg:4326'}
-
-def get_secret(key, secrets_path):
-    """
-    Open the JSON file at ``secrets_path``,
-    and return the value corresponding to the given key.
-    Good for retrieving your API key.
-    """
-    secrets_path = Path(secrets_path)
-    with secrets_path.open() as src:
-        secrets = json.load(src)
-    return secrets[key]
 
 def flip_coords(xy_list):
     """
