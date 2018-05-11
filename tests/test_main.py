@@ -59,14 +59,14 @@ def test_point_df_to_gdf():
     assert isinstance(g, gpd.GeoDataFrame)
     assert g.shape[0] == f.shape[0]
     assert set(g.columns) == set(['id', 'geometry'])
-    assert g.crs == CRS_WGS84
+    assert g.crs == WGS84
 
 def test_point_gdf_to_df():
     g = gpd.GeoDataFrame([
         ['bingo', sg.Point([172.5, -36])],
         ['bongo', sg.Point([172.7, -36.5])],
     ], columns=['id', 'geometry'])
-    g.crs = CRS_WGS84
+    g.crs = WGS84
     f = point_gdf_to_df(g, x_col='x', y_col='y', to_crs={'init': 'epsg:2193'})
     assert isinstance(f, pd.DataFrame)
     assert f.shape[0] == g.shape[0]
@@ -91,30 +91,26 @@ def test_build_distance_matrix_df():
 
     f = build_distance_matrix_df(client, points, points)
     assert isinstance(f, pd.DataFrame)
-    assert f.shape[0] == n**2 - n
-    expect_cols = ['origin_address', 'destination_address',
-      'origin_id', 'destination_id', 'duration', 'distance']
-    assert set(f.columns) == set(expect_cols)
-
-    # Create different mock response to Google Matrix API call
-    path = DATA_DIR/'points_response_include_selfies.json'
-    with path.open() as src:
-        body = src.read()
-
-    responses.reset()
-    responses.add(responses.GET,
-      'https://maps.googleapis.com/maps/api/distancematrix/json',
-      body=body, status=200, content_type='application/json'
-    )
-
-    f = build_distance_matrix_df(client, points, points, include_selfies=True)
-    assert isinstance(f, pd.DataFrame)
     assert f.shape[0] == n**2
     expect_cols = ['origin_address', 'destination_address',
       'origin_id', 'destination_id', 'duration', 'distance']
     assert set(f.columns) == set(expect_cols)
 
-def test_cost_build_distance_matrix_df():
-    s = cost_build_distance_matrix_df(10)
+    # Test error response
+    responses.reset()
+    responses.add(responses.GET,
+      'https://maps.googleapis.com/maps/api/distancematrix/json',
+      body=body, status=400, content_type='application/json'
+    )
+
+    f = build_distance_matrix_df(client, points, points)
+    assert isinstance(f, pd.DataFrame)
+    assert f.shape[0] == 0
+    expect_cols = ['origin_address', 'destination_address',
+      'origin_id', 'destination_id', 'duration', 'distance']
+    assert set(f.columns) == set(expect_cols)
+
+def test_compute_cost():
+    s = compute_cost(10)
     assert isinstance(s, pd.Series)
     assert s.size == 4

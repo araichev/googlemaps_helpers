@@ -1,1 +1,162 @@
-{"origin_addresses": ["9 Waverley Ave, Glenfield, Auckland 0629, New Zealand"], "destination_addresses": ["919 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand", "26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand"], "status": "OK", "rows": [{"elements": [{"status": "OK", "distance": {"value": 18688, "text": "18.7 km"}, "duration": {"value": 1562, "text": "26 mins"}}, {"status": "OK", "distance": {"value": 31495, "text": "31.5 km"}, "duration": {"value": 2304, "text": "38 mins"}}]}]}
+{
+  "rows": [
+    {
+      "elements": [
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "1 min",
+            "value": 0
+          },
+          "distance": {
+            "text": "1 m",
+            "value": 0
+          },
+          "duration": {
+            "text": "1 min",
+            "value": 0
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "25 mins",
+            "value": 1522
+          },
+          "distance": {
+            "text": "20.4 km",
+            "value": 20350
+          },
+          "duration": {
+            "text": "26 mins",
+            "value": 1535
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "39 mins",
+            "value": 2314
+          },
+          "distance": {
+            "text": "33.2 km",
+            "value": 33157
+          },
+          "duration": {
+            "text": "38 mins",
+            "value": 2299
+          }
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "24 mins",
+            "value": 1468
+          },
+          "distance": {
+            "text": "18.2 km",
+            "value": 18226
+          },
+          "duration": {
+            "text": "25 mins",
+            "value": 1512
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "1 min",
+            "value": 10
+          },
+          "distance": {
+            "text": "1 m",
+            "value": 0
+          },
+          "duration": {
+            "text": "1 min",
+            "value": 0
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "29 mins",
+            "value": 1724
+          },
+          "distance": {
+            "text": "18.6 km",
+            "value": 18597
+          },
+          "duration": {
+            "text": "29 mins",
+            "value": 1719
+          }
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "38 mins",
+            "value": 2296
+          },
+          "distance": {
+            "text": "31.2 km",
+            "value": 31168
+          },
+          "duration": {
+            "text": "38 mins",
+            "value": 2286
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "27 mins",
+            "value": 1649
+          },
+          "distance": {
+            "text": "18.6 km",
+            "value": 18567
+          },
+          "duration": {
+            "text": "28 mins",
+            "value": 1660
+          }
+        },
+        {
+          "status": "OK",
+          "duration_in_traffic": {
+            "text": "1 min",
+            "value": 0
+          },
+          "distance": {
+            "text": "1 m",
+            "value": 0
+          },
+          "duration": {
+            "text": "1 min",
+            "value": 0
+          }
+        }
+      ]
+    }
+  ],
+  "status": "OK",
+  "origin_addresses": [
+    "9 Waverley Ave, Glenfield, Auckland 0629, New Zealand",
+    "919 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand",
+    "26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand"
+  ],
+  "destination_addresses": [
+    "9 Waverley Ave, Glenfield, Auckland 0629, New Zealand",
+    "919 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand",
+    "26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand"
+  ]
+}

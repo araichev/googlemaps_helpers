@@ -9,7 +9,7 @@ Currently a tiny a hodgepodge incorporating GeoPandas.
 
 Installation
 =============
-``pipenv install git+https://github.com/araichev/googlemaps_helpers#egg=googlemaps_helpers``
+``pipenv install git+https://github.com/mrcagne/googlemaps_helpers#egg=googlemaps_helpers``
 
 
 Usage
@@ -30,6 +30,11 @@ Notes
 
 History
 ========
+
+1.0.0, 2018-05-11
+------------------
+- Simplified API
+
 
 0.1.0, 2018-05-09
 ------------------
