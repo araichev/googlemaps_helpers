@@ -5,5 +5,5 @@
   "tests/test_main.py::test_point_df_to_gdf",
   "tests/test_main.py::test_point_gdf_to_df",
   "tests/test_main.py::test_build_distance_matrix_df",
-  "tests/test_main.py::test_cost_build_distance_matrix_df"
+  "tests/test_main.py::test_compute_cost"
 ]

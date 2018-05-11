@@ -2,13 +2,15 @@ from itertools import product
 import math
 from collections import OrderedDict
 
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 import shapely.geometry as sg
+import googlemaps
 
 
-CRS_WGS84 = {'init' :'epsg:4326'}
+WGS84 = {'init': 'epsg:4326'}
+# Maximum number of elements in a Google Maps Distance Matrix API query
+MAX_ELEMENTS = 100
 
 def flip_coords(xy_list):
     """
@@ -88,7 +90,7 @@ def to_df(distance_matrix_response, origin_ids=None, destination_ids=None):
 
     return f
 
-def point_df_to_gdf(f, x_col='lon', y_col='lat', from_crs=CRS_WGS84):
+def point_df_to_gdf(f, x_col='lon', y_col='lat', from_crs=WGS84):
     """
     Given a DataFrame of points with x coordinates
     in the column ``x_col`` and y coordinates in the column ``y_col``,
@@ -105,7 +107,7 @@ def point_df_to_gdf(f, x_col='lon', y_col='lat', from_crs=CRS_WGS84):
     f.crs = from_crs
     return f
 
-def point_gdf_to_df(f, x_col='lon', y_col='lat', to_crs=CRS_WGS84):
+def point_gdf_to_df(f, x_col='lon', y_col='lat', to_crs=WGS84):
     """
     The inverse of :func:`point_df_to_gdf`.
     Given a GeoDataFrame of points, convert to the coordinate reference
@@ -126,107 +128,97 @@ def point_gdf_to_df(f, x_col='lon', y_col='lat', to_crs=CRS_WGS84):
 
 def build_distance_matrix_df(client, origins_gdf, destinations_gdf,
   origin_id_col=None, destination_id_col=None,
-  include_selfies=False, chunk_size=100, **distance_matrix_kwargs):
+  max_elements=MAX_ELEMENTS, **distance_matrix_kwargs):
     """
-    Compute the duration-distance matrix between all pairs of origin
-    and destination points given.
-    To do this, call the Google Maps Distance Matrix API repeatedly
-    with calls of size ``one-to-chunk_size``.
+    Compute the duration-distance matrix between one origin and many
+    (up to ``max_elements``) destinations.
+    To do this, call the Google Maps Distance Matrix API once.
 
     INPUT:
 
     - ``client``: google-maps-services-python Client instance
-    - ``origins_gdf``: GeoDataFrame of points; the origins
-    - ``destinations_gdf``: GeoDataFrame of points; the destinations
+    - ``origin_gdf``: GeoDataFrame (slice) containing one point;
+      the origin
+    - ``destinations_gdf``: GeoDataFrame of at most ``max_elements``
+      points; the destinations
     - ``origin_id_col``: string; name of ID column in ``origins_gdf``
     - ``destination_id_col``: string; name of ID column in
       ``destinations_gdf``
-    - ``include_selfies``: boolean; include entries where the origin
-      equals the destination if and only if this is true
-    - ``chunk_size``: integer; max number of origin-destination rows
-      per matrix query
-    - ``matrix_kwargs``: dictionary; keyword arguments for Google Maps
-      Distance Matrix API
+    - ``max_elements``: integer; max number of elements allowable in
+      Google Maps Distance Matrix API call
+    - ``distance_matrix_kwargs``: dictionary; keyword arguments for
+      Google Maps Distance Matrix API
 
     OUTPUT:
 
-    A DataFrame of the form output by :func:`to_df` where the origins
-    come from ``origins_gdf`` and the destinations come from
+    A DataFrame of the form output by :func:`to_df` where the origin
+    comes from ``origin_gdf`` and the destinations come from
     ``destinations_gdf``.
+
+    Return an empty DataFrame with the expected column names if an
+    HTTPError on Timeout exception occurs.
     """
-    # Initialize origin and destination GeoDataFrames
+    # Initialize origin and destinations GeoDataFrames
     o_gdf = origins_gdf.copy()
-    if o_gdf.crs != CRS_WGS84:
-        o_gdf = o_gdf.to_crs(CRS_WGS84)
+    d_gdf = destinations_gdf.copy()
+
+    n = o_gdf.shape[0]*d_gdf.shape[0]
+    if n > max_elements:
+        raise ValueError('Number of origins times number of destinations '
+          'is {}, which exceeds threshold of {} elements'.format(
+          n, max_elements))
+
+    # Prepare origin data
+    if o_gdf.crs != WGS84:
+        o_gdf = o_gdf.to_crs(WGS84)
     if origin_id_col is None:
         origin_id_col = 'temp_id'
         o_gdf[origin_id_col] = make_ids(o_gdf.shape[0])
 
-    d_gdf = destinations_gdf.copy()
-    if d_gdf.crs != CRS_WGS84:
-        d_gdf = d_gdf.to_crs(CRS_WGS84)
+    o_locs = [geo.coords[0] for geo in o_gdf['geometry']]
+    o_ids = o_gdf[origin_id_col].values
+
+    # Prepare destination data
+    if d_gdf.crs != WGS84:
+        d_gdf = d_gdf.to_crs(WGS84)
     if destination_id_col is None:
         destination_id_col = 'temp_id'
         d_gdf[destination_id_col] = make_ids(d_gdf.shape[0])
 
-    # Call Google Maps Distance Matrix API
-    frames = []
-    status = 'OK'
-    num_chunks = math.ceil(o_gdf.shape[0]/chunk_size)
-    for o_id, o_geom in o_gdf[[origin_id_col, 'geometry']].itertuples(
-      index=False):
-        # Get single origin
-        o_locs = [o_geom.coords[0]]
-        o_ids = [o_id]
+    d_locs = [geo.coords[0] for geo in d_gdf['geometry']]
+    d_ids = d_gdf[destination_id_col].values
 
-        # Get destinations in chunks
-        if include_selfies:
-            f = d_gdf.copy()
-        else:
-            cond = d_gdf['geometry'] != o_geom
-            f = d_gdf[cond].copy()
+    # Get matrix info
+    try:
+        r = client.distance_matrix(flip_coords(o_locs),
+          flip_coords(d_locs), **distance_matrix_kwargs)
+        f = to_df(r, o_ids, d_ids)
+    except (googlemaps.exceptions.HTTPError, googlemaps.exceptions.Timeout):
+        # Empty DataFrame
+        f =  pd.DataFrame(columns=[
+            'origin_address',
+            'origin_id',
+            'destination_address',
+            'destination_id',
+            'duration',
+            'distance',
+        ])
 
-        for chunk in np.array_split(f, num_chunks):
-            d_locs = [geo.coords[0] for geo in chunk['geometry']]
-            d_ids = chunk[destination_id_col].values
+    return f
 
-            # Quit if bad status
-            if status != 'OK':
-                print('Quitting because of bad status:', status)
-                break
-
-            # Get matrix
-            try:
-                r = client.distance_matrix(flip_coords(o_locs),
-                  flip_coords(d_locs), **distance_matrix_kwargs)
-                if r['status'] != 'OK':
-                    break
-                df = to_df(r, o_ids, d_ids)
-            except:
-                df = pd.DataFrame()
-                df['origin_address'] = np.nan
-                df['origin_id'] = o_ids
-                df['destination_address'] = np.nan
-                df['destination_id'] = d_ids
-                df['duration_address'] = np.nan
-                df['distance'] = np.nan
-            frames.append(df)
-
-    # Concatenate matrices
-    return pd.concat(frames)
-
-def cost_build_distance_matrix_df(n, cost=0.5/1000, num_freebies=0,
-  daily_limit=10000, chunk_size=100):
+def compute_cost(n, cost=0.5/1000, num_freebies=0,
+  daily_limit=100000, chunk_size=100):
     """
-    Estimate the cost of a Google Maps Distance Matrix query
-    with n elements at ``cost`` USD per element where the first
-    ``num_freebies`` (integer) elements are free.
+    Estimate the cost of a sequence of Google Maps Distance Matrix
+    queries comprising a total of n elements at ``cost`` USD per
+    element, where the first ``num_freebies`` (integer) elements are
+    free.
     Return a Series that includes the cost and some other metadata.
     """
     d = OrderedDict()
     d['#elements'] = n
-    d['exceeds {!s}-element daily limit?'.format(daily_limit)
-      ] = n > daily_limit
+    d['exceeds {!s}-element daily limit?'.format(daily_limit)] = (
+        n > daily_limit)
     d['estimated cost for job in USD'] = max(0, n - num_freebies)*cost
     d['estimated duration for job in minutes'] = n/chunk_size/60
     return pd.Series(d)
