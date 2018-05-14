@@ -71,15 +71,15 @@ def to_df(distance_matrix_response, origin_ids=None, destination_ids=None):
       *product(origin_ids, destination_ids))
 
     # Append durations and distances
-    if 'duration_in_traffic' in r['rows'][0]['elements'][0]:
-        dur_key = 'duration_in_traffic'
-    else:
-        dur_key = 'duration'
     durs = []
     dists = []
     for row in r['rows']:
         for e in row['elements']:
             if e['status'] == 'OK':
+                if 'duration_in_traffic' in e:
+                    dur_key = 'duration_in_traffic'
+                else:
+                    dur_key = 'duration'
                 durs.append(e[dur_key]['value'])
                 dists.append(e['distance']['value'])
             else:
