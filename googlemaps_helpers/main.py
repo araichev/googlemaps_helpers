@@ -1,6 +1,8 @@
 from itertools import product
 import math
 from collections import OrderedDict
+from pathlib import Path
+import logging
 
 import pandas as pd
 import numpy as np
@@ -8,6 +10,15 @@ import geopandas as gpd
 import shapely.geometry as sg
 import googlemaps
 
+
+# Configure logging
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+  '%(asctime)s %(name)-12s %(levelname)-8s \n%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 WGS84 = {'init': 'epsg:4326'}
 # Maximum number of elements in a Google Maps Distance Matrix API query
@@ -131,29 +142,28 @@ def build_distance_matrix_df(client, origins_gdf, destinations_gdf,
   origin_id_col=None, destination_id_col=None,
   max_elements=MAX_ELEMENTS, **distance_matrix_kwargs):
     """
-    Compute the duration-distance matrix between one origin and many
-    (up to ``max_elements``) destinations.
+    Compute the duration-distance matrix between the given origins
+    and destinations, assuming that the number of origins multiplied
+    by the number of destinations is at most ``max_elements``.
     To do this, call the Google Maps Distance Matrix API once.
 
     INPUT:
 
     - ``client``: google-maps-services-python Client instance
-    - ``origin_gdf``: GeoDataFrame (slice) containing one point;
-      the origin
-    - ``destinations_gdf``: GeoDataFrame of at most ``max_elements``
-      points; the destinations
+    - ``origins_gdf``: GeoDataFrame of point; the origins
+    - ``destinations_gdf``: GeoDataFrame of points; the destinations
     - ``origin_id_col``: string; name of ID column in ``origins_gdf``
     - ``destination_id_col``: string; name of ID column in
       ``destinations_gdf``
     - ``max_elements``: integer; max number of elements allowable in
-      Google Maps Distance Matrix API call
+      one Google Maps Distance Matrix API call
     - ``distance_matrix_kwargs``: dictionary; keyword arguments for
       Google Maps Distance Matrix API
 
     OUTPUT:
 
-    A DataFrame of the form output by :func:`to_df` where the origin
-    comes from ``origin_gdf`` and the destinations come from
+    A DataFrame of the form output by :func:`to_df` where the origins
+    come from ``origins_gdf`` and the destinations come from
     ``destinations_gdf``.
 
     Return an empty DataFrame with the expected column names if an
@@ -207,8 +217,100 @@ def build_distance_matrix_df(client, origins_gdf, destinations_gdf,
 
     return f
 
+def run_distance_matrix_job(client, origins_gdf, destinations_gdf, out_dir,
+  origin_id_col=None, destination_id_col=None,
+  max_elements=MAX_ELEMENTS, **distance_matrix_kwargs):
+    """
+    Compute the duration-distance matrix between the given origins
+    and destinations.
+    To do this, call the Google Maps Distance Matrix API repeatedly,
+    ensuring that each call uses no more than ``max_elements`` elements.
+
+    INPUT:
+
+    - ``client``: google-maps-services-python Client instance
+    - ``origins_gdf``: GeoDataFrame of points; the origins
+    - ``destinations_gdf``: GeoDataFrame of points; the destinations
+    - ``out_dir``: string or Path object of a directory at which
+      to store the output files; create the directory if it does not
+      exist
+    - ``origin_id_col``: string; name of ID column in ``origins_gdf``
+    - ``destination_id_col``: string; name of ID column in
+      ``destinations_gdf``
+    - ``max_elements``: integer; max number of elements allowable in
+      one Google Maps Distance Matrix API call
+    - ``distance_matrix_kwargs``: dictionary; keyword arguments for
+      Google Maps Distance Matrix API
+
+    OUTPUT:
+
+    A collection of CSV files located at ``out_dir`` of the form output
+    by :func:`to_df`, where the origins comes from ``origins_gdf`` and
+    the destinations come from ``destinations_gdf``.
+    Each file will contains one origin points and at most
+    ``max_elements`` destination points, for a total of at most
+    ``max_elements`` rows.
+    An empty DataFrame with the expected column names will be saved to
+    file if an HTTPError on Timeout exception occurs.
+    This can happen if, for example, the daily query limit is exceeded.
+    """
+    o_gdf = origins_gdf.copy()
+    d_gdf = destinations_gdf.copy()
+
+    n_o = o_gdf.shape[0]
+    n_d = d_gdf.shape[0]
+
+    # Create IDs if necessary
+    if origin_id_col is None:
+        origin_id_col = 'ersatz_origin_id'
+        o_gdf[origin_id_col] = make_ids(n_o, 'orig_row_')
+
+    if destination_id_col is None:
+        destination_id_col = 'ersatz_destination_id'
+        d_gdf[destination_id_col] = make_ids(n_d, 'dest_row_')
+
+    # Get mode for logging
+    mode = distance_matrix_kwargs.get('mode', 'driving')
+
+    # Make output directory if it does not exist
+    out_dir = Path(out_dir)
+    if not out_dir.exists():
+        out_dir.mkdir(parents=True)
+
+    # Iterate through origins.
+    # For each origin segment all destinations into chunks of size
+    # at most ``max_elements``.
+    # For each destination chunk, build a one-to-many matrix from the
+    # origin to all the destinations in the chunk and save it to file.
+    for ix, orig_id in o_gdf[[origin_id_col]].itertuples():
+        logger.info('Working on origin {} of {} (id {})'.format(
+          ix + 1, n_o, orig_id))
+
+        # Chunk destinations and build one-to-many matrices from origin
+        # to destination chunks.
+        # A failed attempt (e.g. through API usage over limit)
+        # will build an empty matrix
+        for j in range(math.ceil(n_d/max_elements)):
+            n1 = max_elements*j
+            n2 = min(max_elements*(j + 1), n_d)
+            dest_id1, dest_id2 = (
+                d_gdf[destination_id_col].iat[n1],
+                d_gdf[destination_id_col].iat[n2 - 1]
+            )
+            path = Path(out_dir)/'{}_from_{}_to_{}--{}.csv'.format(
+              mode, orig_id, dest_id1, dest_id2)
+            f = build_distance_matrix_df(client, o_gdf.loc[ix:ix],
+              d_gdf.iloc[n1:n2],
+              origin_id_col=origin_id_col,
+              destination_id_col=destination_id_col,
+              **distance_matrix_kwargs)
+            f.to_csv(path, index=False)
+
+            if f.empty:
+                logger.info('* Failed to get data for ' + path.stem)
+
 def compute_cost(n, cost=0.5/1000, num_freebies=0,
-  daily_limit=100000, chunk_size=100):
+  daily_limit=100000, chunk_size=MAX_ELEMENTS):
     """
     Estimate the cost of a sequence of Google Maps Distance Matrix
     queries comprising a total of n elements at ``cost`` USD per
