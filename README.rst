@@ -31,6 +31,11 @@ Notes
 History
 ========
 
+1.0.1, 2018-05-14
+------------------
+- Bugfixed the handling of ``'duration_in_traffic'`` keys in the function ``to_df``.
+
+
 1.0.0, 2018-05-11
 ------------------
 - Simplified API
