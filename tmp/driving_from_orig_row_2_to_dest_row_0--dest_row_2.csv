@@ -1,0 +1,4 @@
+origin_address,destination_address,origin_id,destination_id,duration,distance
+"26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand","9 Waverley Ave, Glenfield, Auckland 0629, New Zealand",orig_row_2,dest_row_0,2566,31543
+"26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand","919 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand",orig_row_2,dest_row_1,1660,18567
+"26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand","26 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand",orig_row_2,dest_row_2,0,0

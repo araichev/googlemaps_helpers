@@ -1,0 +1,4 @@
+origin_address,destination_address,origin_id,destination_id,duration,distance
+"917 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand","12 Waverley Ave, Glenfield, Auckland 0629, New Zealand",orig_row_1,dest_row_0,4739,19957
+"917 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand","917 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand",orig_row_1,dest_row_1,0,0
+"917 Mount Eden Rd, Mount Eden, Auckland 1024, New Zealand","23 Ben Nevis Pl, Northpark, Auckland 2013, New Zealand",orig_row_1,dest_row_2,6453,31916

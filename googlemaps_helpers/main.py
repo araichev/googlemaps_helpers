@@ -1,6 +1,8 @@
 from itertools import product
 import math
 from collections import OrderedDict
+from pathlib import Path
+import logging
 
 import pandas as pd
 import numpy as np
@@ -8,6 +10,15 @@ import geopandas as gpd
 import shapely.geometry as sg
 import googlemaps
 
+
+# Configure logging
+logger = logging.getLogger()
+handler = logging.StreamHandler()
+formatter = logging.Formatter(
+  '%(asctime)s %(name)-12s %(levelname)-8s \n%(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 WGS84 = {'init': 'epsg:4326'}
 # Maximum number of elements in a Google Maps Distance Matrix API query
@@ -223,3 +234,64 @@ def compute_cost(n, cost=0.5/1000, num_freebies=0,
     d['estimated cost for job in USD'] = max(0, n - num_freebies)*cost
     d['estimated duration for job in minutes'] = n/chunk_size/60
     return pd.Series(d)
+
+def run_distance_matrix_job(client, origins_gdf, destinations_gdf, out_dir,
+  origin_id_col=None, destination_id_col=None,
+  max_elements=MAX_ELEMENTS, **distance_matrix_kwargs):
+    """
+    Run job and save intermediate outputs along the way.
+    """
+    o_gdf = origins_gdf.copy()
+    d_gdf = destinations_gdf.copy()
+
+    n_o = o_gdf.shape[0]
+    n_d = d_gdf.shape[0]
+
+    # Create IDs if necessary
+    if origin_id_col is None:
+        origin_id_col = 'ersatz_origin_id'
+        o_gdf[origin_id_col] = make_ids(n_o, 'orig_row_')
+
+    if destination_id_col is None:
+        destination_id_col = 'ersatz_destination_id'
+        d_gdf[destination_id_col] = make_ids(n_d, 'dest_row_')
+
+    # Get mode for logging
+    mode = distance_matrix_kwargs.get('mode', 'driving')
+
+    # Make output directory if it does not exist
+    out_dir = Path(out_dir)
+    if not out_dir.exists():
+        out_dir.mkdir(parents=True)
+
+    # Iterate through origins.
+    # For each origin segment all destinations into chunks of size
+    # at most ``max_elements``.
+    # For each destination chunk, build a one-to-many matrix from the
+    # origin to all the destinations in the chunk and save it to file.
+    for ix, orig_id in o_gdf[[origin_id_col]].itertuples():
+        logger.info('Working on origin {} of {} (id {})'.format(
+          ix + 1, n_o, orig_id))
+
+        # Chunk destinations and build one-to-many matrices from origin
+        # to destination chunks.
+        # A failed attempt (e.g. through API usage over limit)
+        # will build an empty matrix
+        for j in range(math.ceil(n_d/max_elements)):
+            n1 = max_elements*j
+            n2 = min(max_elements*(j + 1), n_d)
+            dest_id1, dest_id2 = (
+                d_gdf[destination_id_col].iat[n1],
+                d_gdf[destination_id_col].iat[n2 - 1]
+            )
+            path = Path(out_dir)/'{}_from_{}_to_{}--{}.csv'.format(
+              mode, orig_id, dest_id1, dest_id2)
+            f = build_distance_matrix_df(client, o_gdf.loc[ix:ix],
+              d_gdf.iloc[n1:n2],
+              origin_id_col=origin_id_col,
+              destination_id_col=destination_id_col,
+              **distance_matrix_kwargs)
+            f.to_csv(path, index=False)
+
+            if f.empty:
+                logger.info('* Failed to get data for ' + path.stem)
