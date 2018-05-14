@@ -3,6 +3,7 @@ import math
 from collections import OrderedDict
 
 import pandas as pd
+import numpy as np
 import geopandas as gpd
 import shapely.geometry as sg
 import googlemaps
@@ -83,8 +84,8 @@ def to_df(distance_matrix_response, origin_ids=None, destination_ids=None):
                 durs.append(e[dur_key]['value'])
                 dists.append(e['distance']['value'])
             else:
-                durs.append(None)
-                dists.append(None)
+                durs.append(np.nan)
+                dists.append(np.nan)
     f['duration'] = durs
     f['distance'] = dists
 

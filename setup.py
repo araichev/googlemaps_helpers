@@ -9,7 +9,7 @@ with open('LICENSE.txt') as f:
 
 setuptools.setup(
     name="googlemaps_helpers",
-    version="1.0.1",
+    version="1.0.2",
     url="https://github.com/araichev/googlemaps_helpers",
     author="Alex Raichev",
     author_email="araichev@users.noreply.github.com",
