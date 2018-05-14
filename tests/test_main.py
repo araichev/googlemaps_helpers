@@ -1,3 +1,5 @@
+import tempfile
+
 import geopandas as gpd
 import responses
 import googlemaps
@@ -111,7 +113,7 @@ def test_build_distance_matrix_df():
     assert set(f.columns) == set(expect_cols)
 
 @responses.activate
-def test_run_distance_matrix_job()
+def test_run_distance_matrix_job():
     # Load test points
     path = DATA_DIR/'points.geojson'
     points = gpd.read_file(str(path))
@@ -130,13 +132,19 @@ def test_run_distance_matrix_job()
     # TODO: Finish this
     with tempfile.TemporaryDirectory() as out_dir:
         run_distance_matrix_job(client, points, points, out_dir)
-        # Read files in out_dir and check dimensions
+        # Read files in out_dir and check dimensions.
+        # Also check number of files is correct.
+        count = 0
         for path in Path(out_dir).iterdir():
+            count += 1
+            f = pd.read_csv(path)
             assert isinstance(f, pd.DataFrame)
-            assert f.shape[0] == n**2
+            assert f.shape[0] == n
             expect_cols = ['origin_address', 'destination_address',
               'origin_id', 'destination_id', 'duration', 'distance']
             assert set(f.columns) == set(expect_cols)
+
+        assert count == n
 
 def test_compute_cost():
     s = compute_cost(10)

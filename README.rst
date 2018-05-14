@@ -31,6 +31,11 @@ Notes
 History
 ========
 
+1.1.0, 2018-05-15
+------------------
+- Added the function ``run_distance_matrix_job`` to run a job requiring multiple API calls
+
+
 1.0.2, 2018-05-14
 ------------------
 - Replace ``None`` with ``numpy.nan`` in function ``to_df``.
