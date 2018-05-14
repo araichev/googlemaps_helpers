@@ -3,8 +3,9 @@ Google Maps Helpers
 .. image:: https://travis-ci.org/mrcagney/googlemaps_helpers.svg?branch=master
     :target: https://travis-ci.org/mrcagney/googlemaps_helpers
 
-Some Python 3.4+ helpers for the `Google Maps API Python client <https://github.com/googlemaps/google-maps-services-python>`_.
-Currently a tiny a hodgepodge incorporating GeoPandas.
+A tiny Python 3.5+ library of helpers that use the `Google Maps API Python client <https://github.com/googlemaps/google-maps-services-python>`_.
+Only incorporates the Distance Matrix API at present.
+Use the library to run small or large jobs with inputs as GeoPandas GeoDataFrames and outputs as Pandas DataFrames.
 
 
 Installation
